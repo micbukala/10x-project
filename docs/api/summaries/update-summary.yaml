@@ -1,0 +1,213 @@
+openapi: 3.0.0
+info:
+  title: Summary Update API
+  version: '1.0'
+  description: API endpoint for updating research summaries
+paths:
+  /api/summaries/{id}:
+    patch:
+      summary: Update an existing summary
+      description: |
+        Update title and/or content of an existing research summary.
+        Only the owner of the summary can perform updates.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the summary to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  description: New title for the summary
+                content:
+                  type: object
+                  properties:
+                    research_objective:
+                      type: string
+                    methods:
+                      type: string
+                    results:
+                      type: string
+                    discussion:
+                      type: string
+                    open_questions:
+                      type: string
+                    conclusions:
+                      type: string
+              anyOf:
+                - required: [title]
+                - required: [content]
+      responses:
+        '200':
+          description: Summary updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - title
+                  - content
+                  - creation_type
+                  - ai_model_name
+                  - created_at
+                  - updated_at
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                  content:
+                    type: object
+                    required:
+                      - research_objective
+                      - methods
+                      - results
+                      - discussion
+                      - open_questions
+                      - conclusions
+                    properties:
+                      research_objective:
+                        type: string
+                      methods:
+                        type: string
+                      results:
+                        type: string
+                      discussion:
+                        type: string
+                      open_questions:
+                        type: string
+                      conclusions:
+                        type: string
+                  creation_type:
+                    type: string
+                    enum: [ai, manual]
+                  ai_model_name:
+                    type: string
+                    nullable: true
+                  created_at:
+                    type: string
+                    format: date-time
+                  updated_at:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        enum: [VALIDATION_ERROR]
+                      message:
+                        type: string
+                      field:
+                        type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        enum: [UNAUTHORIZED]
+                      message:
+                        type: string
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        enum: [FORBIDDEN]
+                      message:
+                        type: string
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        enum: [NOT_FOUND]
+                      message:
+                        type: string
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: object
+                    required:
+                      - code
+                      - message
+                    properties:
+                      code:
+                        type: string
+                        enum: [INTERNAL_ERROR, DATABASE_ERROR]
+                      message:
+                        type: string
+      security:
+        - BearerAuth: []
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

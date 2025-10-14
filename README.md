@@ -82,7 +82,7 @@ AI SciSum is a web application designed to help scientists, students, and profes
    ```
 
 5. **Set up Supabase database:**
-   
+
    Run the database migrations in your Supabase project (migrations to be added).
 
 6. **Start the development server:**
@@ -92,20 +92,20 @@ AI SciSum is a web application designed to help scientists, students, and profes
    ```
 
 7. **Open your browser:**
-   
+
    Navigate to `http://localhost:4321`
 
 ## 📜 Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start the development server with hot reload |
-| `npm run build` | Build the application for production |
-| `npm run preview` | Preview the production build locally |
-| `npm run astro` | Run Astro CLI commands |
-| `npm run lint` | Run ESLint to check code quality |
-| `npm run lint:fix` | Automatically fix linting issues |
-| `npm run format` | Format code with Prettier |
+| Script             | Description                                  |
+| ------------------ | -------------------------------------------- |
+| `npm run dev`      | Start the development server with hot reload |
+| `npm run build`    | Build the application for production         |
+| `npm run preview`  | Preview the production build locally         |
+| `npm run astro`    | Run Astro CLI commands                       |
+| `npm run lint`     | Run ESLint to check code quality             |
+| `npm run lint:fix` | Automatically fix linting issues             |
+| `npm run format`   | Format code with Prettier                    |
 
 ## 📦 Project Scope
 
@@ -182,12 +182,12 @@ Built with ❤️ for the scientific community
 ```md
 .
 ├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
+│ ├── layouts/ # Astro layouts
+│ ├── pages/ # Astro pages
+│ │ └── api/ # API endpoints
+│ ├── components/ # UI components (Astro & React)
+│ └── assets/ # Static assets
+├── public/ # Public assets
 ```
 
 ## AI Development Support
