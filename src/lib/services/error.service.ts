@@ -61,7 +61,6 @@ export class ErrorService {
         code: "FORBIDDEN",
         message: error.message,
       };
-      };
     } else {
       // Handle specific error messages for better user experience
       const message = error.message.toLowerCase();

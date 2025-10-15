@@ -27,6 +27,7 @@ ALERT_WEBHOOK_URL=your-alert-webhook
 ### Staging Environment
 
 1. Set environment variables:
+
    ```bash
    export NODE_ENV=staging
    export PUBLIC_SUPABASE_URL=https://staging-project.supabase.co
@@ -34,11 +35,13 @@ ALERT_WEBHOOK_URL=your-alert-webhook
    ```
 
 2. Run smoke tests:
+
    ```bash
    npm run test:smoke
    ```
 
 3. Deploy to staging:
+
    ```bash
    npm run build
    npm run start
@@ -53,6 +56,7 @@ ALERT_WEBHOOK_URL=your-alert-webhook
 ### Production Environment
 
 1. Set environment variables:
+
    ```bash
    export NODE_ENV=production
    export PUBLIC_SUPABASE_URL=https://production-project.supabase.co
@@ -60,11 +64,13 @@ ALERT_WEBHOOK_URL=your-alert-webhook
    ```
 
 2. Run smoke tests:
+
    ```bash
    npm run test:smoke
    ```
 
 3. Deploy to production:
+
    ```bash
    npm run build
    npm run start
@@ -82,6 +88,7 @@ ALERT_WEBHOOK_URL=your-alert-webhook
 If issues are detected after deployment:
 
 1. Revert to previous version:
+
    ```bash
    git checkout previous-tag
    npm run build

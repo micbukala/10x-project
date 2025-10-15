@@ -26,21 +26,16 @@ export class AiLimitExceededError extends Error {
 }
 
 export class NotFoundError extends Error {
-  constructor(message: string = "Summary not found") {
+  constructor(message = "Summary not found") {
     super(message);
     this.name = "NotFoundError";
   }
 }
 
 export class ForbiddenError extends Error {
-  constructor(message: string = "Permission denied") {
+  constructor(message = "Permission denied") {
     super(message);
     this.name = "ForbiddenError";
-  }
-}
-  ) {
-    super("AI generation limit exceeded");
-    this.name = "AiLimitExceededError";
   }
 }
 
@@ -48,6 +43,48 @@ export class SummaryService {
   private readonly MONTHLY_AI_LIMIT = 5;
 
   constructor(private readonly supabase: SupabaseClient) {}
+
+  /**
+   * Create a new manual summary
+   * @param userId - ID of the user creating the summary
+   * @param title - Title of the summary
+   * @param content - Structured content of the summary
+   * @returns Promise resolving to the created summary details
+   * @throws Error if there's a database error during creation
+   */
+  async createManualSummary(userId: string, title: string, content: SummaryContentDTO): Promise<SummaryDetailDTO> {
+    // Prepare insert data
+    const insertData = {
+      user_id: userId,
+      title: title,
+      content: content as unknown as Json,
+      creation_type: "manual" as const,
+      ai_model_name: null,
+    };
+
+    // Insert the summary
+    const { data: summary, error } = await this.supabase.from("summaries").insert(insertData).select().single();
+
+    if (error) {
+      console.error("Database error while creating manual summary:", error);
+      throw new Error("Failed to create summary: Database error");
+    }
+
+    if (!summary) {
+      throw new Error("Failed to create summary: No data returned");
+    }
+
+    // Return typed response
+    return {
+      id: summary.id,
+      title: summary.title,
+      content: summary.content as unknown as SummaryContentDTO,
+      creation_type: summary.creation_type,
+      ai_model_name: summary.ai_model_name,
+      created_at: summary.created_at,
+      updated_at: summary.updated_at,
+    } as SummaryDetailDTO;
+  }
 
   /**
    * Delete a summary by ID
@@ -81,10 +118,7 @@ export class SummaryService {
     }
 
     // Delete the summary
-    const { error: deleteError } = await this.supabase
-      .from("summaries")
-      .delete()
-      .eq("id", summaryId);
+    const { error: deleteError } = await this.supabase.from("summaries").delete().eq("id", summaryId);
 
     if (deleteError) {
       console.error("Database error while deleting summary:", deleteError);
@@ -93,7 +127,7 @@ export class SummaryService {
 
     return {
       message: "Summary deleted successfully",
-      deleted_id: summaryId
+      deleted_id: summaryId,
     };
   }
 

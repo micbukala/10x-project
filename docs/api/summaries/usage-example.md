@@ -15,12 +15,12 @@ This guide explains how to use the summary update endpoint in your frontend appl
 ```typescript
 async function updateSummary(summaryId: string, updates: UpdateSummaryCommand) {
   const response = await fetch(`/api/summaries/${summaryId}`, {
-    method: 'PATCH',
+    method: "PATCH",
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getAuthToken()}` // Your token management function
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getAuthToken()}`, // Your token management function
     },
-    body: JSON.stringify(updates)
+    body: JSON.stringify(updates),
   });
 
   if (!response.ok) {
@@ -36,12 +36,12 @@ async function updateSummary(summaryId: string, updates: UpdateSummaryCommand) {
 
 ```typescript
 try {
-  const updatedSummary = await updateSummary('123e4567-e89b-12d3-a456-426614174000', {
-    title: 'Updated Research Summary Title'
+  const updatedSummary = await updateSummary("123e4567-e89b-12d3-a456-426614174000", {
+    title: "Updated Research Summary Title",
   });
-  console.log('Summary updated:', updatedSummary);
+  console.log("Summary updated:", updatedSummary);
 } catch (error) {
-  console.error('Failed to update summary:', error);
+  console.error("Failed to update summary:", error);
 }
 ```
 
@@ -49,15 +49,15 @@ try {
 
 ```typescript
 try {
-  const updatedSummary = await updateSummary('123e4567-e89b-12d3-a456-426614174000', {
+  const updatedSummary = await updateSummary("123e4567-e89b-12d3-a456-426614174000", {
     content: {
-      research_objective: 'Updated research objective',
-      methods: 'Updated research methods'
-    }
+      research_objective: "Updated research objective",
+      methods: "Updated research methods",
+    },
   });
-  console.log('Summary content updated:', updatedSummary);
+  console.log("Summary content updated:", updatedSummary);
 } catch (error) {
-  console.error('Failed to update summary:', error);
+  console.error("Failed to update summary:", error);
 }
 ```
 
@@ -68,33 +68,33 @@ The API returns structured error responses that you should handle in your fronte
 ```typescript
 type ApiError = {
   error: {
-    code: 'VALIDATION_ERROR' | 'UNAUTHORIZED' | 'FORBIDDEN' | 'NOT_FOUND' | 'DATABASE_ERROR' | 'INTERNAL_ERROR';
+    code: "VALIDATION_ERROR" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "DATABASE_ERROR" | "INTERNAL_ERROR";
     message: string;
     field?: string;
-  }
+  };
 };
 
 function handleApiError(error: ApiError) {
   switch (error.error.code) {
-    case 'VALIDATION_ERROR':
+    case "VALIDATION_ERROR":
       // Handle validation errors (e.g., show field-specific error messages)
       return `Invalid ${error.error.field}: ${error.error.message}`;
-    
-    case 'UNAUTHORIZED':
+
+    case "UNAUTHORIZED":
       // Handle authentication errors (e.g., redirect to login)
-      return 'Please log in to continue';
-    
-    case 'FORBIDDEN':
+      return "Please log in to continue";
+
+    case "FORBIDDEN":
       // Handle permission errors
-      return 'You do not have permission to update this summary';
-    
-    case 'NOT_FOUND':
+      return "You do not have permission to update this summary";
+
+    case "NOT_FOUND":
       // Handle not found errors
-      return 'Summary not found';
-    
+      return "Summary not found";
+
     default:
       // Handle other errors
-      return 'An unexpected error occurred. Please try again later.';
+      return "An unexpected error occurred. Please try again later.";
   }
 }
 ```
@@ -106,13 +106,10 @@ function handleApiError(error: ApiError) {
 3. Use proper TypeScript types for better type safety:
 
 ```typescript
-import type { UpdateSummaryCommand, SummaryDetailDTO } from '../types';
+import type { UpdateSummaryCommand, SummaryDetailDTO } from "../types";
 
 // Your update function with proper typing
-async function updateSummary(
-  summaryId: string, 
-  updates: UpdateSummaryCommand
-): Promise<SummaryDetailDTO> {
+async function updateSummary(summaryId: string, updates: UpdateSummaryCommand): Promise<SummaryDetailDTO> {
   // Implementation
 }
 ```

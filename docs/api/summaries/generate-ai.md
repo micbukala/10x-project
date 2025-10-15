@@ -16,10 +16,10 @@ JWT Bearer token required in Authorization header.
 
 ### Headers
 
-| Name            | Required | Description                |
-|----------------|----------|----------------------------|
-| Authorization  | Yes      | Bearer \<token\>           |
-| Content-Type   | Yes      | application/json           |
+| Name          | Required | Description      |
+| ------------- | -------- | ---------------- |
+| Authorization | Yes      | Bearer \<token\> |
+| Content-Type  | Yes      | application/json |
 
 ### Body
 

@@ -22,7 +22,15 @@ Replace `api.example.com` with your actual API domain.
 
 ## Endpoints
 
+### User Management
+
 - [User Profile](./api/user-profile.md)
+
+### Summaries
+
+- [Create Manual Summary](./api/summaries/create-manual-summary.md) - Create a new manual summary
+- [Generate AI Summary](./api/summaries/generate-ai.md) - Generate an AI-powered summary
+- [Usage Examples](./api/summaries/usage-example.md) - Common usage patterns
 
 ## Common Response Formats
 

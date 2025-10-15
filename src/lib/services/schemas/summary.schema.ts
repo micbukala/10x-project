@@ -1,10 +1,22 @@
 import { z } from "zod";
+import { isSummaryContent, type SummaryContentDTO } from "../../../types";
 
 /**
  * Schema for validating UUID format of summary ID
  */
 export const summaryIdSchema = z.object({
   id: z.string().uuid({ message: "Invalid summary ID format" }),
+});
+
+/**
+ * Schema for validating manual summary creation request
+ */
+export const createManualSummarySchema = z.object({
+  title: z.string().trim().min(1, "Title cannot be empty").max(500, "Title cannot exceed 500 characters"),
+  content: z.custom<SummaryContentDTO>(
+    (data) => isSummaryContent(data),
+    "Invalid summary content structure. All 6 fields are required: research_objective, methods, results, discussion, open_questions, conclusions"
+  ),
 });
 
 /**
@@ -37,3 +49,4 @@ export const uuidSchema = z
  * Types inferred from the schemas
  */
 export type ValidatedListQuery = z.infer<typeof summaryListQuerySchema>;
+export type ValidatedCreateManualSummary = z.infer<typeof createManualSummarySchema>;
