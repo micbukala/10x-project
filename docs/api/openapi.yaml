@@ -1,0 +1,460 @@
+openapi: 3.0.0
+info:
+  title: Research Summaries API
+  version: 1.0.0
+  description: API for managing research paper summaries
+
+servers:
+  - url: /api
+    description: Production server
+
+paths:
+  /summaries/{id}:
+    delete:
+      summary: Delete a specific summary
+      description: Permanently deletes a research summary. User can only delete their own summaries.
+      operationId: deleteSummary
+      tags:
+        - summaries
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The UUID of the summary to delete
+      responses:
+        200:
+          description: Summary successfully deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - message
+                  - deleted_id
+                properties:
+                  message:
+                    type: string
+                    example: Summary deleted successfully
+                  deleted_id:
+                    type: string
+                    format: uuid
+        400:
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        401:
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        403:
+          description: Permission denied (attempting to delete another user's summary)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          description: Summary not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        500:
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserProfile:
+      type: object
+      required:
+        - id
+        - ai_usage_count
+        - usage_period_start
+        - monthly_limit
+        - remaining_generations
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User's unique identifier
+        ai_usage_count:
+          type: integer
+          minimum: 0
+          description: Number of AI summaries generated in current period
+        usage_period_start:
+          type: string
+          format: date-time
+          description: Start timestamp of current usage period
+        monthly_limit:
+          type: integer
+          minimum: 1
+          description: Maximum allowed AI generations per month (constant 5)
+          example: 5
+        remaining_generations:
+          type: integer
+          minimum: 0
+          description: Remaining AI generations for current period
+
+    UserAiUsage:
+      type: object
+      required:
+        - can_generate
+        - usage_count
+        - monthly_limit
+        - remaining_generations
+        - period_start
+        - period_end
+      properties:
+        can_generate:
+          type: boolean
+          description: Whether user can generate more AI summaries (remaining_generations > 0)
+        usage_count:
+          type: integer
+          minimum: 0
+          description: Number of AI summaries generated in current billing period
+        monthly_limit:
+          type: integer
+          minimum: 1
+          description: Maximum allowed AI generations per month (constant 5)
+          example: 5
+        remaining_generations:
+          type: integer
+          minimum: 0
+          description: Remaining AI generations available (monthly_limit - usage_count)
+        period_start:
+          type: string
+          format: date-time
+          description: Start of current billing period (beginning of calendar month)
+          example: "2025-10-01T00:00:00.000Z"
+        period_end:
+          type: string
+          format: date-time
+          description: End of current billing period (end of month, 23:59:59.999)
+          example: "2025-10-31T23:59:59.999Z"
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              enum:
+                - UNAUTHORIZED
+                - FORBIDDEN
+                - NOT_FOUND
+                - VALIDATION_ERROR
+                - AI_LIMIT_EXCEEDED
+                - INVALID_PARAMETER
+                - INTERNAL_ERROR
+                - DATABASE_ERROR
+            message:
+              type: string
+            field:
+              type: string
+            details:
+              type: object
+
+    SummaryContent:
+      type: object
+      required:
+        - research_objective
+        - methods
+        - results
+        - discussion
+        - open_questions
+        - conclusions
+      properties:
+        research_objective:
+          type: string
+        methods:
+          type: string
+        results:
+          type: string
+        discussion:
+          type: string
+        open_questions:
+          type: string
+        conclusions:
+          type: string
+
+    SummaryListItem:
+      type: object
+      required:
+        - id
+        - title
+        - creation_type
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        creation_type:
+          type: string
+          enum: [manual, ai]
+        ai_model_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SummaryDetail:
+      allOf:
+        - $ref: '#/components/schemas/SummaryListItem'
+        - type: object
+          required:
+            - content
+          properties:
+            content:
+              $ref: '#/components/schemas/SummaryContent'
+
+paths:
+  /users/me:
+    get:
+      summary: Get user profile
+      description: Returns authenticated user's profile with AI usage statistics
+      operationId: getUserProfile
+      tags:
+        - users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/ai-usage:
+    get:
+      summary: Get AI usage statistics
+      description: |
+        Returns detailed AI usage information for the authenticated user including:
+        - Current usage count for the month
+        - Monthly generation limit
+        - Remaining generations available
+        - Current billing period dates
+        - Whether user can generate more AI summaries
+        
+        Automatically resets the usage counter when a new month starts.
+      operationId: getAiUsage
+      tags:
+        - users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: AI usage information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAiUsage'
+              example:
+                can_generate: true
+                usage_count: 3
+                monthly_limit: 5
+                remaining_generations: 2
+                period_start: "2025-10-01T00:00:00.000Z"
+                period_end: "2025-10-31T23:59:59.999Z"
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "UNAUTHORIZED"
+                  message: "Authentication required"
+        '500':
+          description: Failed to retrieve AI usage information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "INTERNAL_ERROR"
+                  message: "Failed to retrieve AI usage information"
+
+  /summaries:
+    get:
+      summary: List summaries
+      description: Returns a paginated list of summaries
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created_at, updated_at, title]
+            default: created_at
+          description: Field to sort by
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort direction
+        - name: creation_type
+          in: query
+          schema:
+            type: string
+            enum: [manual, ai]
+          description: Filter by creation type
+      responses:
+        '200':
+          description: List of summaries
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - summaries
+                  - pagination
+                properties:
+                  summaries:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SummaryListItem'
+                  pagination:
+                    type: object
+                    required:
+                      - current_page
+                      - total_pages
+                      - total_items
+                      - items_per_page
+                    properties:
+                      current_page:
+                        type: integer
+                      total_pages:
+                        type: integer
+                      total_items:
+                        type: integer
+                      items_per_page:
+                        type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /summaries/{id}:
+    get:
+      summary: Get summary details
+      description: Returns detailed information about a specific summary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Summary ID
+      responses:
+        '200':
+          description: Summary details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummaryDetail'
+        '400':
+          description: Invalid ID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Summary not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
