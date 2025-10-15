@@ -101,6 +101,26 @@ export class UserService {
       remaining_generations: MONTHLY_AI_LIMIT - data.ai_usage_count,
     };
   }
+
+  /**
+   * Permanently deletes a user account and all associated data
+   * Database cascading constraints will automatically delete related summaries
+   *
+   * @param supabase - Authenticated Supabase client
+   * @param userId - User's unique identifier
+   * @returns Success status of the deletion operation
+   * @throws Error if database query fails
+   */
+  async deleteUserAccount(supabase: SupabaseClient, userId: string): Promise<{ success: boolean }> {
+    // Delete from users table (summaries cascade automatically)
+    const { error } = await supabase.from("users").delete().eq("id", userId);
+
+    if (error) {
+      throw new Error(`Failed to delete user account: ${error.message}`);
+    }
+
+    return { success: true };
+  }
 }
 
 export const userService = new UserService();
