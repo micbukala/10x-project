@@ -1,5 +1,6 @@
 import type { ApiErrorDTO, ApiErrorCode } from "../../types";
 import { z } from "zod";
+import { NotFoundError, ForbiddenError, AiLimitExceededError } from "./summary.service";
 
 /**
  * Custom API error class for handling specific error cases
@@ -41,6 +42,29 @@ export class ErrorService {
         message: error.message,
         ...(error.field && { field: error.field }),
         ...(error.details && { details: error.details }),
+      };
+    } else if (error instanceof NotFoundError) {
+      status = 404;
+      errorResponse.error = {
+        code: "NOT_FOUND",
+        message: error.message,
+      };
+    } else if (error instanceof ForbiddenError) {
+      status = 403;
+      errorResponse.error = {
+        code: "FORBIDDEN",
+        message: error.message,
+      };
+    } else if (error instanceof AiLimitExceededError) {
+      status = 429;
+      errorResponse.error = {
+        code: "AI_LIMIT_EXCEEDED",
+        message: error.message,
+        details: {
+          current_usage: error.currentUsage,
+          monthly_limit: error.monthlyLimit,
+          reset_date: error.resetDate,
+        },
       };
     } else if (error instanceof z.ZodError) {
       status = 400;

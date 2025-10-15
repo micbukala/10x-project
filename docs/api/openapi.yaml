@@ -82,6 +82,74 @@ components:
       bearerFormat: JWT
 
   schemas:
+    UserProfile:
+      type: object
+      required:
+        - id
+        - ai_usage_count
+        - usage_period_start
+        - monthly_limit
+        - remaining_generations
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User's unique identifier
+        ai_usage_count:
+          type: integer
+          minimum: 0
+          description: Number of AI summaries generated in current period
+        usage_period_start:
+          type: string
+          format: date-time
+          description: Start timestamp of current usage period
+        monthly_limit:
+          type: integer
+          minimum: 1
+          description: Maximum allowed AI generations per month (constant 5)
+          example: 5
+        remaining_generations:
+          type: integer
+          minimum: 0
+          description: Remaining AI generations for current period
+
+    UserAiUsage:
+      type: object
+      required:
+        - can_generate
+        - usage_count
+        - monthly_limit
+        - remaining_generations
+        - period_start
+        - period_end
+      properties:
+        can_generate:
+          type: boolean
+          description: Whether user can generate more AI summaries (remaining_generations > 0)
+        usage_count:
+          type: integer
+          minimum: 0
+          description: Number of AI summaries generated in current billing period
+        monthly_limit:
+          type: integer
+          minimum: 1
+          description: Maximum allowed AI generations per month (constant 5)
+          example: 5
+        remaining_generations:
+          type: integer
+          minimum: 0
+          description: Remaining AI generations available (monthly_limit - usage_count)
+        period_start:
+          type: string
+          format: date-time
+          description: Start of current billing period (beginning of calendar month)
+          example: "2025-10-01T00:00:00.000Z"
+        period_end:
+          type: string
+          format: date-time
+          description: End of current billing period (end of month, 23:59:59.999)
+          example: "2025-10-31T23:59:59.999Z"
+
     Error:
       type: object
       required:
@@ -172,6 +240,87 @@ components:
               $ref: '#/components/schemas/SummaryContent'
 
 paths:
+  /users/me:
+    get:
+      summary: Get user profile
+      description: Returns authenticated user's profile with AI usage statistics
+      operationId: getUserProfile
+      tags:
+        - users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/ai-usage:
+    get:
+      summary: Get AI usage statistics
+      description: |
+        Returns detailed AI usage information for the authenticated user including:
+        - Current usage count for the month
+        - Monthly generation limit
+        - Remaining generations available
+        - Current billing period dates
+        - Whether user can generate more AI summaries
+        
+        Automatically resets the usage counter when a new month starts.
+      operationId: getAiUsage
+      tags:
+        - users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: AI usage information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAiUsage'
+              example:
+                can_generate: true
+                usage_count: 3
+                monthly_limit: 5
+                remaining_generations: 2
+                period_start: "2025-10-01T00:00:00.000Z"
+                period_end: "2025-10-31T23:59:59.999Z"
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "UNAUTHORIZED"
+                  message: "Authentication required"
+        '500':
+          description: Failed to retrieve AI usage information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: "INTERNAL_ERROR"
+                  message: "Failed to retrieve AI usage information"
+
   /summaries:
     get:
       summary: List summaries

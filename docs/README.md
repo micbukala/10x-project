@@ -30,7 +30,9 @@ Replace `api.example.com` with your actual API domain.
 
 - [Create Manual Summary](./api/summaries/create-manual-summary.md) - Create a new manual summary
 - [Generate AI Summary](./api/summaries/generate-ai.md) - Generate an AI-powered summary
+- [Delete Summary](./api/summaries/delete-summary.md) - Delete a specific summary (requires ownership)
 - [Usage Examples](./api/summaries/usage-example.md) - Common usage patterns
+- [Summaries API Overview](./api/summaries/README.md) - Complete summaries API reference
 
 ## Common Response Formats
 

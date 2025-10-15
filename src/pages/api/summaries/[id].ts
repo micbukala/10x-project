@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ErrorService, ApiError } from "../../../lib/services/error.service";
 import { uuidSchema, summaryIdSchema } from "../../../lib/services/schemas/summary.schema";
 import { SummaryService } from "../../../lib/services/summary.service";
-import type { UpdateSummaryCommand, ApiErrorDTO, SummaryContentDTO, DeleteSummaryResponseDTO } from "../../../types";
+import type { UpdateSummaryCommand, ApiErrorDTO, SummaryContentDTO } from "../../../types";
 import { ApiMonitoring } from "../../../../monitoring";
 
 // Disable static prerendering for API routes
@@ -15,9 +15,11 @@ export const prerender = false;
 export const DELETE: APIRoute = async ({ locals, params }) => {
   const startTime = Date.now();
   const endpoint = `/api/summaries/${params.id}`;
+  let userId: string | undefined;
 
   try {
     const { supabase, user } = locals;
+    userId = user?.id;
 
     if (!user) {
       throw new ApiError("UNAUTHORIZED", "Authentication required", 401);
@@ -46,13 +48,7 @@ export const DELETE: APIRoute = async ({ locals, params }) => {
 
     // Initialize service and delete summary
     const summaryService = new SummaryService(supabase);
-    const deletedId = await summaryService.deleteSummary(user.id, id);
-
-    // Build success response
-    const response: DeleteSummaryResponseDTO = {
-      message: "Summary deleted successfully",
-      deleted_id: deletedId,
-    };
+    const response = await summaryService.deleteSummary(user.id, id);
 
     return new Response(JSON.stringify(response), {
       status: 200,
@@ -73,7 +69,7 @@ export const DELETE: APIRoute = async ({ locals, params }) => {
       timestamp: new Date().toISOString(),
       endpoint,
       method: "DELETE",
-      userId: user?.id,
+      userId,
       duration,
       statusCode: 200,
       operationType: "delete",
@@ -88,10 +84,12 @@ export const DELETE: APIRoute = async ({ locals, params }) => {
 export const GET: APIRoute = async ({ locals, params }) => {
   const startTime = Date.now();
   const endpoint = `/api/summaries/${params.id}`;
+  let userId: string | undefined;
 
   try {
     // Ensure user is authenticated
     const { user, supabase } = locals;
+    userId = user?.id;
     if (!user) {
       return new Response(
         JSON.stringify({
@@ -156,7 +154,7 @@ export const GET: APIRoute = async ({ locals, params }) => {
       timestamp: new Date().toISOString(),
       endpoint,
       method: "GET",
-      userId: user.id,
+      userId,
       duration: Date.now() - startTime,
       statusCode: 200,
     });
@@ -179,7 +177,7 @@ export const GET: APIRoute = async ({ locals, params }) => {
       timestamp: new Date().toISOString(),
       endpoint,
       method: "GET",
-      userId: locals.user?.id,
+      userId,
       duration: Date.now() - startTime,
       statusCode: 500,
       error: {
@@ -231,11 +229,12 @@ const updateSummarySchema = z
 export const PATCH: APIRoute = async ({ request, locals, params }) => {
   const startTime = Date.now();
   const endpoint = `/api/summaries/${params.id}`;
-  const user = locals.user;
+  let userId: string | undefined;
 
   try {
     // Authentication is handled by middleware
     const { user } = locals;
+    userId = user?.id;
 
     // Validate summary ID
     const summaryId = params.id;
@@ -261,6 +260,11 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
     const body = await request.json();
     const validatedData = updateSummarySchema.parse(body) as UpdateSummaryCommand;
 
+    // Ensure user is authenticated
+    if (!user) {
+      throw new ApiError("UNAUTHORIZED", "Authentication required", 401);
+    }
+
     // Initialize service with Supabase client from context
     const summaryService = new SummaryService(locals.supabase);
 
@@ -277,7 +281,7 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
       timestamp: new Date().toISOString(),
       endpoint,
       method: "PATCH",
-      userId: user.id,
+      userId,
       duration: Date.now() - startTime,
       statusCode: 200,
     });
@@ -326,7 +330,7 @@ export const PATCH: APIRoute = async ({ request, locals, params }) => {
       timestamp: new Date().toISOString(),
       endpoint,
       method: "PATCH",
-      userId: user?.id,
+      userId,
       duration: Date.now() - startTime,
       statusCode: status,
       error: {
