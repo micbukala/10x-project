@@ -1,18 +1,13 @@
 import { z } from "zod";
 import type { APIRoute } from "astro";
 import { SummaryService, AiLimitExceededError } from "../../../lib/services/summary.service";
-import { isSummaryContent } from "../../../types";
+import { generateAiSummarySchema } from "../../../lib/services/schemas/summary.schema";
 import { ApiMonitoring } from "../../../../monitoring";
+import { MONTHLY_AI_LIMIT } from "../../../lib/constants";
+import type { GenerateAiSummaryResponseDTO } from "../../../types";
 
 // Disable static prerendering for API routes
 export const prerender = false;
-
-// Zod schema for request validation
-const generateAiSummarySchema = z.object({
-  title: z.string().trim().min(1, "Title is required"),
-  content: z.custom<SummaryContentDTO>((data) => isSummaryContent(data), "Invalid summary content structure"),
-  ai_model_name: z.string().min(1, "AI model name is required"),
-});
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const startTime = Date.now();
@@ -48,6 +43,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       validatedData.ai_model_name
     );
 
+    // Fetch updated user AI usage count to calculate remaining generations
+    const { data: userData } = await locals.supabase.from("users").select("ai_usage_count").eq("id", user.id).single();
+
+    const remainingGenerations = MONTHLY_AI_LIMIT - (userData?.ai_usage_count || 0);
+
+    // Prepare response with remaining_generations
+    const response: GenerateAiSummaryResponseDTO = {
+      ...summary,
+      remaining_generations: remainingGenerations,
+    };
+
     // Log successful request
     ApiMonitoring.logApiRequest({
       timestamp: new Date().toISOString(),
@@ -59,7 +65,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
     // Return successful response
-    return new Response(JSON.stringify(summary), {
+    return new Response(JSON.stringify(response), {
       status: 201,
       headers: {
         "Content-Type": "application/json",
@@ -101,7 +107,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       timestamp: new Date().toISOString(),
       endpoint,
       method: "POST",
-      userId: user?.id,
+      userId: locals.user?.id,
       duration: Date.now() - startTime,
       statusCode: 500,
       error: {
